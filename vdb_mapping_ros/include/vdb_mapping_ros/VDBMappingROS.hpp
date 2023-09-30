@@ -35,6 +35,9 @@ VDBMappingROS<VDBMappingT>::VDBMappingROS(const ros::NodeHandle& nh)
   , m_dynamic_reconfigure_service(ros::NodeHandle("~/vdb_mapping"))
   , m_tf_listener(m_tf_buffer)
 {
+  
+  ros::Duration(1.0).sleep(); // system reset wait for tf
+
   m_priv_nh.param<double>("resolution", m_resolution, 0.1);
   m_vdb_map = std::make_unique<VDBMappingT>(m_resolution);
 
