@@ -353,6 +353,16 @@ private:
   ros::Publisher m_pointcloud_pub;
 
   /*!
+   * \brief Publisher for the marker array for local map
+   */
+  ros::Publisher m_local_visual_marker_pub;
+
+  /*!
+   * \brief Publisher for the point cloud for local map
+   */
+  ros::Publisher m_local_pointcloud_pub;
+
+  /*!
    * \brief Publisher for map updates
    */
   ros::Publisher m_map_update_pub;

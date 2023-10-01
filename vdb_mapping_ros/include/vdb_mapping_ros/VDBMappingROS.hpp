@@ -182,6 +182,11 @@ VDBMappingROS<VDBMappingT>::VDBMappingROS(const ros::NodeHandle& nh)
     m_priv_nh.advertise<visualization_msgs::Marker>("vdb_map_visualization", 1, true);
   m_pointcloud_pub = m_priv_nh.advertise<sensor_msgs::PointCloud2>("vdb_map_pointcloud", 1, true);
 
+  m_local_visual_marker_pub = 
+    m_priv_nh.advertise<visualization_msgs::Marker>("vdb_map_local_visualization", 1, true);
+  m_local_pointcloud_pub =
+    m_priv_nh.advertise<sensor_msgs::PointCloud2>("vdb_map_local_pointcloud", 1, true);
+
   m_map_reset_service =
     m_priv_nh.advertiseService("reset_map", &VDBMappingROS::mapResetCallback, this);
 
@@ -708,13 +713,34 @@ void VDBMappingROS<VDBMappingT>::publishMap() const
     return;
   }
 
-  bool publish_vis_marker;
-  publish_vis_marker = (m_publish_vis_marker && m_visualization_marker_pub.getNumSubscribers() > 0);
-  bool publish_pointcloud;
-  publish_pointcloud = (m_publish_pointcloud && m_pointcloud_pub.getNumSubscribers() > 0);
+  // Get current robot pose from tf
+  geometry_msgs::TransformStamped robot_to_map_tf;
+  bool is_transform_available = false;
+  try
+  {
+    // Get the transform from robot to map frame, which is the robot odometry
+    robot_to_map_tf = m_tf_buffer.lookupTransform(
+      m_map_frame, m_robot_frame, ros::Time(0), ros::Duration(1.0));
+    is_transform_available = true;
+  }
+  catch (tf::TransformException& ex)
+  {
+    ROS_ERROR_STREAM("Transform from source to map frame failed: " << ex.what());
+  }
 
-  visualization_msgs::Marker visualization_marker_msg;
-  sensor_msgs::PointCloud2 cloud_msg;
+  // check if need to publish
+  bool publish_vis_marker, publish_local_vis_marker;
+  publish_vis_marker = (m_publish_vis_marker && m_visualization_marker_pub.getNumSubscribers() > 0);
+  publish_local_vis_marker =
+    (m_publish_vis_marker && m_local_visual_marker_pub.getNumSubscribers() > 0);
+
+  bool publish_pointcloud, publish_local_pointcloud;
+  publish_pointcloud = (m_publish_pointcloud && m_pointcloud_pub.getNumSubscribers() > 0);
+  publish_local_pointcloud =
+    (m_publish_pointcloud && m_local_pointcloud_pub.getNumSubscribers() > 0);
+
+  visualization_msgs::Marker visualization_marker_msg, local_visual_marker_msg;
+  sensor_msgs::PointCloud2 cloud_msg, local_cloud_msg;
 
   VDBMappingTools<VDBMappingT>::createMappingOutput(m_vdb_map->getGrid(),
                                                     m_map_frame,
@@ -724,6 +750,19 @@ void VDBMappingROS<VDBMappingT>::publishMap() const
                                                     publish_pointcloud,
                                                     m_lower_visualization_z_limit,
                                                     m_upper_visualization_z_limit);
+  
+  if (is_transform_available) {
+    VDBMappingTools<VDBMappingT>::createLocalMappingOutput(m_vdb_map->getGrid(),
+                                                           m_robot_frame,
+                                                           robot_to_map_tf,
+                                                           local_visual_marker_msg,
+                                                           local_cloud_msg,
+                                                           publish_local_vis_marker,
+                                                           publish_local_pointcloud,
+                                                           m_config.max_range,
+                                                           m_lower_visualization_z_limit,
+                                                           m_upper_visualization_z_limit);
+  }
 
   if (publish_vis_marker)
   {
@@ -732,5 +771,13 @@ void VDBMappingROS<VDBMappingT>::publishMap() const
   if (publish_pointcloud)
   {
     m_pointcloud_pub.publish(cloud_msg);
+  }
+  if (is_transform_available && publish_local_vis_marker)
+  {
+    m_local_visual_marker_pub.publish(local_visual_marker_msg);
+  }
+  if (is_transform_available && publish_local_pointcloud)
+  {
+    m_local_pointcloud_pub.publish(local_cloud_msg);
   }
 }

@@ -113,6 +113,113 @@ void VDBMappingTools<VDBMappingT>::createMappingOutput(const typename VDBMapping
   }
 }
 
+template <typename VDBMappingT>
+void VDBMappingTools<VDBMappingT>::createLocalMappingOutput(const typename VDBMappingT::GridT::Ptr grid,
+                                                            const std::string& frame_id,
+                                                            const geometry_msgs::TransformStamped& robot_pose,
+                                                            visualization_msgs::Marker& marker_msg,
+                                                            sensor_msgs::PointCloud2& cloud_msg,
+                                                            const bool create_marker,
+                                                            const bool create_pointcloud,
+                                                            const double max_range,
+                                                            const double lower_z_limit,
+                                                            const double upper_z_limit)
+{
+  typename VDBMappingT::PointCloudT::Ptr cloud(new typename VDBMappingT::PointCloudT);
+
+  openvdb::CoordBBox bbox = grid->evalActiveVoxelBoundingBox();
+  double min_z, max_z;
+
+  openvdb::Vec3d min_world_coord = grid->indexToWorld(bbox.getStart());
+  openvdb::Vec3d max_world_coord = grid->indexToWorld(bbox.getEnd());
+
+  min_z = min_world_coord.z();
+  max_z = max_world_coord.z();
+  if (lower_z_limit != upper_z_limit && lower_z_limit < upper_z_limit)
+  {
+    min_z = min_z < lower_z_limit ? lower_z_limit : min_z;
+    max_z = max_z > upper_z_limit ? upper_z_limit : max_z;
+  }
+
+  // Calculate the robot positon and orientation in format of openvdb
+  const openvdb::Vec3d robot_position(robot_pose.transform.translation.x,
+                                      robot_pose.transform.translation.y,
+                                      robot_pose.transform.translation.z);
+
+  openvdb::Quatd robot_orientation(robot_pose.transform.rotation.x,
+                                   robot_pose.transform.rotation.y,
+                                   robot_pose.transform.rotation.z,
+                                   robot_pose.transform.rotation.w);
+  // Invert the orientation to get the rotation from world to robot frame
+  robot_orientation = robot_orientation.inverse();
+
+
+  for (typename VDBMappingT::GridT::ValueOnCIter iter = grid->cbeginValueOn(); iter; ++iter)
+  {
+    openvdb::Vec3d world_coord = grid->indexToWorld(iter.getCoord());
+    // convert to robot frame considering the robot position and orientation
+    openvdb::Vec3d robot_coord = world_coord - robot_position;
+    robot_coord = robot_orientation.rotateVector(robot_coord);
+
+    // check if the voxel is in the local map
+    if (robot_coord.x() < -max_range || robot_coord.x() > max_range ||
+        robot_coord.y() < -max_range || robot_coord.y() > max_range ||
+        robot_coord.z() < min_z || robot_coord.z() > max_z)
+    {
+      continue;
+    }
+
+    if (create_marker)
+    {
+      geometry_msgs::Point cube_center;
+      cube_center.x = robot_coord.x();
+      cube_center.y = robot_coord.y();
+      cube_center.z = robot_coord.z();
+      marker_msg.points.push_back(cube_center);
+      // Calculate the relative height of each voxel.
+      double h = (1.0 - ((robot_coord.z() - min_z) / (max_z - min_z)));
+      marker_msg.colors.push_back(heightColorCoding(h));
+    }
+    if (create_pointcloud)
+    {
+      cloud->points.push_back(
+        typename VDBMappingT::PointT(robot_coord.x(), robot_coord.y(), robot_coord.z()));
+    }
+  }
+
+  if (create_marker)
+  {
+    double size                   = grid->transform().voxelSize()[0];
+    marker_msg.header.frame_id    = frame_id;
+    marker_msg.header.stamp       = robot_pose.header.stamp;
+    marker_msg.id                 = 0;
+    marker_msg.type               = visualization_msgs::Marker::CUBE_LIST;
+    marker_msg.scale.x            = size;
+    marker_msg.scale.y            = size;
+    marker_msg.scale.z            = size;
+    marker_msg.color.a            = 1.0;
+    marker_msg.pose.orientation.w = 1.0;
+    marker_msg.frame_locked       = true;
+
+    if (marker_msg.points.size() > 0)
+    {
+      marker_msg.action = visualization_msgs::Marker::ADD;
+    }
+    else
+    {
+      marker_msg.action = visualization_msgs::Marker::DELETE;
+    }
+  }
+  if (create_pointcloud)
+  {
+    cloud->width  = cloud->points.size();
+    cloud->height = 1;
+    pcl::toROSMsg(*cloud, cloud_msg);
+    cloud_msg.header.frame_id = frame_id;
+    cloud_msg.header.stamp    = robot_pose.header.stamp;
+  }
+}
+
 // Conversion from Hue to RGB Value
 template <typename VDBMappingT>
 std_msgs::ColorRGBA VDBMappingTools<VDBMappingT>::heightColorCoding(const double height)

@@ -31,6 +31,7 @@
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl_ros/point_cloud.h>
 #include <ros/ros.h>
+#include <geometry_msgs/TransformStamped.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <visualization_msgs/Marker.h>
 
@@ -48,7 +49,6 @@ public:
    * \brief Creates output msgs for pointcloud and marker arrays
    *
    * \param grid Map grid
-   * \param resolution Resolution of the grid
    * \param frame_id Frame ID of the grid
    * \param marker_msg Output Marker message
    * \param cloud_msg Output Pointcloud message
@@ -73,6 +73,29 @@ public:
    * \returns RGBA color of the grid cell
    */
   static std_msgs::ColorRGBA heightColorCoding(const double height);
+
+  /*!
+   * \brief Creates local map center at the robot pose
+   *
+   * \param grid Map grid
+   * \param frame_id Frame ID of the grid
+   * \param robot_pose Robot pose
+   * \param marker_msg Output Marker message
+   * \param cloud_msg Output Pointcloud message
+   * \param create_marker Flag specifying to create a marker message
+   * \param create_pointcloud Flag specifying to create a pointcloud message
+   * \param max_range Maximum range of the sensor
+   */
+  static void createLocalMappingOutput(const typename VDBMappingT::GridT::Ptr grid,
+                                       const std::string& frame_id,
+                                       const geometry_msgs::TransformStamped& robot_pose,
+                                       visualization_msgs::Marker& marker_msg,
+                                       sensor_msgs::PointCloud2& cloud_msg,
+                                       const bool create_marker,
+                                       const bool create_pointcloud,
+                                       const double max_range,
+                                       const double lower_z_limit,
+                                       const double upper_z_limit);
 };
 
 #include "VDBMappingTools.hpp"
