@@ -4,10 +4,7 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /Global Options1
-        - /Status1
-        - /PointCloud21
-        - /PointCloud21/Autocompute Value Bounds1
+        - /GlobalCloud1/Autocompute Value Bounds1
       Splitter Ratio: 0.5
     Tree Height: 1052
   - Class: rviz/Selection
@@ -27,7 +24,7 @@ Panels:
   - Class: rviz/Time
     Name: Time
     SyncMode: 0
-    SyncSource: PointCloud2
+    SyncSource: GlobalCloud
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -39,7 +36,7 @@ Visualization Manager:
       Cell Size: 1
       Class: rviz/Grid
       Color: 160; 160; 164
-      Enabled: true
+      Enabled: false
       Line Style:
         Line Width: 0.029999999329447746
         Value: Lines
@@ -52,12 +49,12 @@ Visualization Manager:
       Plane: XY
       Plane Cell Count: 10
       Reference Frame: <Fixed Frame>
-      Value: true
+      Value: false
     - Alpha: 0.5
       Autocompute Intensity Bounds: false
       Autocompute Value Bounds:
         Max Value: 9.9399995803833
-        Min Value: 0.5600000023841858
+        Min Value: -2.380000114440918
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -71,7 +68,7 @@ Visualization Manager:
       Max Intensity: 4096
       Min Color: 0; 0; 0
       Min Intensity: 0
-      Name: PointCloud2
+      Name: GlobalCloud
       Position Transformer: XYZ
       Queue Size: 10
       Selectable: true
@@ -86,7 +83,7 @@ Visualization Manager:
     - Class: rviz/Marker
       Enabled: false
       Marker Topic: /vdb_mapping/vdb_map_visualization
-      Name: Marker
+      Name: GlobalMarker
       Namespaces:
         {}
       Queue Size: 0
@@ -217,99 +214,95 @@ Visualization Manager:
       Show Axes: true
       Show Names: true
       Tree:
-        BASE:
-          BASE_FORE:
-            BASE_inertia:
-              {}
-          IMU_BASE_base_link:
-            IMU_BASE_link:
-              {}
-        BASE_REAR:
-          pc_box:
-            {}
-        BOOM:
-          {}
-        BOOM_BASE:
-          sensor_mount:
-            main_sensor_setup:
-              GNSS:
-                {}
-              PandarQT_base:
-                PandarQT:
-                  {}
-              imu_perception_kit_base:
-                imu_perception_kit_link:
-                  {}
-              zed2i_base_link:
-                zed2i_camera_center:
-                  zed2i_baro_link:
-                    {}
-                  zed2i_left_camera_frame:
-                    zed2i_left_camera_optical_frame:
-                      {}
-                    zed2i_temp_left_link:
-                      {}
-                  zed2i_mag_link:
-                    {}
-                  zed2i_right_camera_frame:
-                    zed2i_right_camera_optical_frame:
-                      {}
-                    zed2i_temp_right_link:
-                      {}
-        DIPPER:
-          {}
-        LF_LEG:
-          {}
-        LF_WHEEL:
-          LF_WHEEL_CONTACT:
-            {}
-        LH_LEG:
-          {}
-        LH_WHEEL:
-          LH_WHEEL_CONTACT:
-            {}
-        RF_LEG:
-          {}
-        RF_WHEEL:
-          RF_WHEEL_CONTACT:
-            {}
-        RH_LEG:
-          {}
-        RH_WHEEL:
-          RH_WHEEL_CONTACT:
-            {}
-        TELE:
-          {}
-        TOOL_PITCH:
-          {}
-        TOOL_ROLL:
-          {}
-        TOOL_TILT:
-          TOOL_CONTACT:
-            {}
-        TOOL_YAW:
-          {}
-        compslam_lio/aft_mapped:
-          {}
-        compslam_lio/aft_mapped_to_init_CORRECTED:
-          {}
-        compslam_lio/camera:
-          {}
-        compslam_lio/camera_CORRECTED:
-          {}
-        compslam_lio/camera_init_GRAVITY_ALIGNED:
-          {}
-        compslam_lio/laser_odom:
-          {}
-        compslam_lio/laser_odom_CORRECTED:
-          {}
         map:
           compslam_lio/camera_init_CORRECTED:
-            compslam_lio/camera_init:
+            compslam_lio/aft_mapped_to_init_CORRECTED:
               {}
-        odom:
-          {}
+            compslam_lio/camera_CORRECTED:
+              {}
+            compslam_lio/camera_init:
+              compslam_lio/aft_mapped:
+                {}
+              compslam_lio/camera:
+                {}
+              compslam_lio/laser_odom:
+                {}
+            compslam_lio/camera_init_GRAVITY_ALIGNED:
+              {}
+            compslam_lio/laser_odom_CORRECTED:
+              {}
+          odom:
+            BASE:
+              BASE_FORE:
+                BASE_REAR:
+                  LH_LEG:
+                    LH_WHEEL:
+                      LH_WHEEL_CONTACT:
+                        {}
+                  RH_LEG:
+                    RH_WHEEL:
+                      RH_WHEEL_CONTACT:
+                        {}
+                  pc_box:
+                    {}
+                BASE_inertia:
+                  {}
+                BOOM_BASE:
+                  BOOM:
+                    DIPPER:
+                      TELE:
+                        TOOL_PITCH:
+                          TOOL_ROLL:
+                            TOOL_YAW:
+                              TOOL_TILT:
+                                TOOL_CONTACT:
+                                  {}
+                  sensor_mount:
+                    main_sensor_setup:
+                      GNSS:
+                        {}
+                      PandarQT_base:
+                        PandarQT:
+                          {}
+                      imu_perception_kit_base:
+                        imu_perception_kit_link:
+                          {}
+                      zed2i_base_link:
+                        zed2i_camera_center:
+                          zed2i_baro_link:
+                            {}
+                          zed2i_left_camera_frame:
+                            zed2i_left_camera_optical_frame:
+                              {}
+                            zed2i_temp_left_link:
+                              {}
+                          zed2i_mag_link:
+                            {}
+                          zed2i_right_camera_frame:
+                            zed2i_right_camera_optical_frame:
+                              {}
+                            zed2i_temp_right_link:
+                              {}
+                LF_LEG:
+                  LF_WHEEL:
+                    LF_WHEEL_CONTACT:
+                      {}
+                RF_LEG:
+                  RF_WHEEL:
+                    RF_WHEEL_CONTACT:
+                      {}
+              IMU_BASE_base_link:
+                IMU_BASE_link:
+                  {}
       Update Interval: 0
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /vdb_mapping/vdb_map_local_visualization
+      Name: LocalMarker
+      Namespaces:
+        "": true
+      Queue Size: 100
       Value: true
   Enabled: true
   Global Options:
@@ -339,7 +332,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 39.789974212646484
+      Distance: 48.354251861572266
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -347,17 +340,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -2.7221837043762207
-        Y: 4.15025520324707
-        Z: 2.308748245239258
+        X: -0.6158037781715393
+        Y: 5.80263090133667
+        Z: -0.2178037315607071
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.11479701101779938
+      Pitch: 0.5947971343994141
       Target Frame: BASE
-      Yaw: 1.1302711963653564
+      Yaw: 0.790271520614624
     Saved: ~
 Window Geometry:
   Displays:

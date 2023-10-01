@@ -30,7 +30,7 @@ PandarQT:
 zed2i:
   topic: /zed2i/zed_node/point_cloud/cloud_registered
   sensor_origin_frame: zed2i_left_camera_frame
-  max_range: 10.0
+  max_range: 15.0
 
 # Remote mapping
 publish_updates: true

@@ -35,8 +35,6 @@ VDBMappingROS<VDBMappingT>::VDBMappingROS(const ros::NodeHandle& nh)
   , m_dynamic_reconfigure_service(ros::NodeHandle("~/vdb_mapping"))
   , m_tf_listener(m_tf_buffer)
 {
-  
-  ros::Duration(1.0).sleep(); // system reset wait for tf
 
   m_priv_nh.param<double>("resolution", m_resolution, 0.1);
   m_vdb_map = std::make_unique<VDBMappingT>(m_resolution);
@@ -73,6 +71,7 @@ VDBMappingROS<VDBMappingT>::VDBMappingROS(const ros::NodeHandle& nh)
     ROS_WARN_STREAM("No robot frame specified");
   }
 
+  ros::Duration(1.0).sleep(); // system reset wait for tf
 
   // Setting up remote sources
   std::vector<std::string> source_ids;
@@ -714,12 +713,11 @@ void VDBMappingROS<VDBMappingT>::publishMap() const
   }
 
   // Get current robot pose from tf
-  geometry_msgs::TransformStamped robot_to_map_tf;
+  geometry_msgs::TransformStamped map_to_robot_tf;
   bool is_transform_available = false;
   try
   {
-    // Get the transform from robot to map frame, which is the robot odometry
-    robot_to_map_tf = m_tf_buffer.lookupTransform(
+    map_to_robot_tf = m_tf_buffer.lookupTransform(
       m_map_frame, m_robot_frame, ros::Time(0), ros::Duration(1.0));
     is_transform_available = true;
   }
@@ -731,13 +729,11 @@ void VDBMappingROS<VDBMappingT>::publishMap() const
   // check if need to publish
   bool publish_vis_marker, publish_local_vis_marker;
   publish_vis_marker = (m_publish_vis_marker && m_visualization_marker_pub.getNumSubscribers() > 0);
-  publish_local_vis_marker =
-    (m_publish_vis_marker && m_local_visual_marker_pub.getNumSubscribers() > 0);
+  publish_local_vis_marker = (m_publish_vis_marker && m_local_visual_marker_pub.getNumSubscribers() > 0);
 
   bool publish_pointcloud, publish_local_pointcloud;
   publish_pointcloud = (m_publish_pointcloud && m_pointcloud_pub.getNumSubscribers() > 0);
-  publish_local_pointcloud =
-    (m_publish_pointcloud && m_local_pointcloud_pub.getNumSubscribers() > 0);
+  publish_local_pointcloud = (m_publish_pointcloud && m_local_pointcloud_pub.getNumSubscribers() > 0);
 
   visualization_msgs::Marker visualization_marker_msg, local_visual_marker_msg;
   sensor_msgs::PointCloud2 cloud_msg, local_cloud_msg;
@@ -752,14 +748,21 @@ void VDBMappingROS<VDBMappingT>::publishMap() const
                                                     m_upper_visualization_z_limit);
   
   if (is_transform_available) {
-    VDBMappingTools<VDBMappingT>::createLocalMappingOutput(m_vdb_map->getGrid(),
+    const double crop_dist = m_config.max_range / sqrt(2);
+    // extract local map
+    const auto local_map = m_vdb_map->getMapSectionGrid(
+      Eigen::Matrix<double, 3, 1>(-m_config.max_range, -m_config.max_range, -m_config.max_range),
+      Eigen::Matrix<double, 3, 1>(m_config.max_range, m_config.max_range, m_config.max_range),
+      tf2::transformToEigen(map_to_robot_tf).matrix());
+
+    VDBMappingTools<VDBMappingT>::createLocalMappingOutput(local_map,
                                                            m_robot_frame,
-                                                           robot_to_map_tf,
+                                                           map_to_robot_tf,
                                                            local_visual_marker_msg,
                                                            local_cloud_msg,
                                                            publish_local_vis_marker,
                                                            publish_local_pointcloud,
-                                                           m_config.max_range,
+                                                           crop_dist,
                                                            m_lower_visualization_z_limit,
                                                            m_upper_visualization_z_limit);
   }
