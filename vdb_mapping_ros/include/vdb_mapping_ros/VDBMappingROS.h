@@ -151,10 +151,12 @@ public:
    *
    * \param update update grid
    * \param overwrite overwrite grid
+   * \param value value grid
    * \param stamp timestamp of the integration step
    */
   void publishUpdates(typename VDBMappingT::UpdateGridT::Ptr update,
                       typename VDBMappingT::UpdateGridT::Ptr overwrite,
+                      typename VDBMappingT::ValueGridT::Ptr value,
                       ros::Time stamp) const;
 
   /*!
@@ -165,6 +167,15 @@ public:
    * \returns update msg
    */
   vdb_mapping_msgs::UpdateGrid gridToMsg(const typename VDBMappingT::UpdateGridT::Ptr update) const;
+
+  /*!
+   * \brief Creates a compressed Bitstream as ROS msg from an input grid
+   *
+   * \param update value grid
+   *
+   * \returns value msg
+   */
+  vdb_mapping_msgs::ValueGrid gridToValue(const typename VDBMappingT::ValueGridT::Ptr value) const;
 
   /*!
    * \brief Creates a compressed Bitstream as string from an input grid

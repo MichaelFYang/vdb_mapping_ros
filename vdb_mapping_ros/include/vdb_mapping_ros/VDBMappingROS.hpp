@@ -437,7 +437,7 @@ bool VDBMappingROS<VDBMappingT>::occGridGenCallback(vdb_mapping_msgs::GetOccGrid
 
   grid.info.origin   = origin_pose;
   int world_to_index = 0;
-  for (openvdb::FloatGrid::ValueOnCIter iter = m_vdb_map->getGrid()->cbeginValueOn(); iter; ++iter)
+  for (auto iter = m_vdb_map->getGrid()->cbeginValueOn(); iter; ++iter)
   {
     if (iter.isValueOn())
     {
@@ -515,15 +515,17 @@ void VDBMappingROS<VDBMappingT>::cloudCallback(const sensor_msgs::PointCloud2::C
   {
     typename VDBMappingT::UpdateGridT::Ptr update;
     typename VDBMappingT::UpdateGridT::Ptr overwrite;
-    m_vdb_map->integrateUpdate(update, overwrite);
+    typename VDBMappingT::ValueGridT::Ptr value;
+    m_vdb_map->integrateUpdate(update, overwrite, value);
     m_vdb_map->resetUpdate();
-    publishUpdates(update, overwrite, cloud_msg->header.stamp);
+    publishUpdates(update, overwrite, value, cloud_msg->header.stamp);
   }
 }
 
 template <typename VDBMappingT>
 void VDBMappingROS<VDBMappingT>::publishUpdates(typename VDBMappingT::UpdateGridT::Ptr update,
                                                 typename VDBMappingT::UpdateGridT::Ptr overwrite,
+                                                typename VDBMappingT::ValueGridT::Ptr value,
                                                 ros::Time stamp) const
 
 {
@@ -536,6 +538,9 @@ void VDBMappingROS<VDBMappingT>::publishUpdates(typename VDBMappingT::UpdateGrid
   {
     vdb_mapping_msgs::UpdateGrid msg = gridToMsg(update);
     msg.header                       = header;
+    vdb_mapping_msgs::ValueGrid value_msg = gridToValue(value);
+    value_msg.header = header;
+    // TODO: pulish value grid
     m_map_update_pub.publish(msg);
   }
   if (m_publish_overwrites)
@@ -598,7 +603,7 @@ template <typename VDBMappingT>
 typename VDBMappingT::ValueGridT::Ptr
 VDBMappingROS<VDBMappingT>::msgToValue(const vdb_mapping_msgs::ValueGrid::ConstPtr& msg) const
 {
-  return byteArrayToGrid(msg->map);
+  return byteArrayToValueGrid(msg->map);
 }
 
 template <typename VDBMappingT>
@@ -683,9 +688,10 @@ void VDBMappingROS<VDBMappingT>::accumulationUpdateTimerCallback(const ros::Time
   // static unsigned int sequence_number = 0;
   typename VDBMappingT::UpdateGridT::Ptr update;
   typename VDBMappingT::UpdateGridT::Ptr overwrite;
-  m_vdb_map->integrateUpdate(update, overwrite);
+  typename VDBMappingT::ValueGridT::Ptr value;
+  m_vdb_map->integrateUpdate(update, overwrite, value);
 
-  publishUpdates(update, overwrite, event.current_real);
+  publishUpdates(update, overwrite, value, event.current_real);
   m_vdb_map->resetUpdate();
 }
 
