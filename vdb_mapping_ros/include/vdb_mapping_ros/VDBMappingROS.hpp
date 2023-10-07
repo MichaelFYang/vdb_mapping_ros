@@ -93,8 +93,11 @@ VDBMappingROS<VDBMappingT>::VDBMappingROS(const ros::NodeHandle& nh)
 
     if (remote_source.apply_remote_updates)
     {
-      remote_source.map_update_sub = m_nh.subscribe(
-        remote_namespace + "/vdb_map_updates", 1, &VDBMappingROS::mapUpdateCallback, this);
+      remote_source.map_update_sub = std::make_shared<message_filters::Subscriber<vdb_mapping_msgs::UpdateGrid>>(nh, "update_topic_name", 1);
+      remote_source.map_value_sub = std::make_shared<message_filters::Subscriber<vdb_mapping_msgs::ValueGrid>>(nh, "value_topic_name", 1);
+      remote_source.sync = std::make_shared<Sync>(MySyncPolicy(10), *remote_source.map_update_sub, *remote_source.map_value_sub);
+      
+      remote_source.sync->registerCallback(boost::bind(&VDBMappingROS::mapUpdateCallback, this, _1, _2));
     }
     if (remote_source.apply_remote_overwrites)
     {
@@ -592,6 +595,13 @@ VDBMappingROS<VDBMappingT>::msgToGrid(const vdb_mapping_msgs::UpdateGrid::ConstP
 }
 
 template <typename VDBMappingT>
+typename VDBMappingT::ValueGridT::Ptr
+VDBMappingROS<VDBMappingT>::msgToValue(const vdb_mapping_msgs::ValueGrid::ConstPtr& msg) const
+{
+  return byteArrayToGrid(msg->map);
+}
+
+template <typename VDBMappingT>
 typename VDBMappingT::UpdateGridT::Ptr
 VDBMappingROS<VDBMappingT>::strToGrid(const std::string& msg) const
 {
@@ -616,7 +626,8 @@ VDBMappingROS<VDBMappingT>::byteArrayToGrid(const std::vector<uint8_t>& msg) con
 
 template <typename VDBMappingT>
 void VDBMappingROS<VDBMappingT>::mapUpdateCallback(
-  const vdb_mapping_msgs::UpdateGrid::ConstPtr& update_msg)
+  const vdb_mapping_msgs::UpdateGrid::ConstPtr& update_msg,
+  const vdb_mapping_msgs::ValueGrid::ConstPtr& value_msg)
 {
   static unsigned int sequence_number = 0;
   if (sequence_number != update_msg->header.seq)
@@ -626,7 +637,7 @@ void VDBMappingROS<VDBMappingT>::mapUpdateCallback(
   }
   sequence_number++;
 
-  m_vdb_map->updateMap(msgToGrid(update_msg));
+  m_vdb_map->updateMap(msgToGrid(update_msg), msgToValue(value_msg));
 }
 
 template <typename VDBMappingT>

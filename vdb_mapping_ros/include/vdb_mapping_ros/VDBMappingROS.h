@@ -38,6 +38,7 @@
 #include <vdb_mapping_msgs/Raytrace.h>
 #include <vdb_mapping_msgs/TriggerMapSectionUpdate.h>
 #include <vdb_mapping_msgs/UpdateGrid.h>
+#include <vdb_mapping_msgs/ValueGrid.h>
 #include <visualization_msgs/Marker.h>
 
 #include <openvdb/io/Stream.h>
@@ -51,14 +52,23 @@
 #include <pcl_ros/point_cloud.h>
 #include <pcl_ros/transforms.h>
 
+#include <message_filters/subscriber.h>
+#include <message_filters/synchronizer.h>
+#include <message_filters/sync_policies/approximate_time.h>
+
 #include <std_srvs/Trigger.h>
 
 #include <dynamic_reconfigure/server.h>
 #include <vdb_mapping_ros/VDBMappingROSConfig.h>
 
+typedef message_filters::sync_policies::ApproximateTime<vdb_mapping_msgs::UpdateGrid, vdb_mapping_msgs::ValueGrid> MySyncPolicy;
+typedef message_filters::Synchronizer<MySyncPolicy> Sync;
+
 struct RemoteSource
 {
-  ros::Subscriber map_update_sub;
+  std::shared_ptr<message_filters::Subscriber<vdb_mapping_msgs::UpdateGrid>> map_update_sub;
+  std::shared_ptr<message_filters::Subscriber<vdb_mapping_msgs::ValueGrid>> map_value_sub;  
+  std::shared_ptr<Sync> sync;
   ros::Subscriber map_overwrite_sub;
   ros::Subscriber map_section_sub;
   ros::ServiceClient get_map_section_client;
@@ -185,6 +195,16 @@ public:
   msgToGrid(const vdb_mapping_msgs::UpdateGrid::ConstPtr& msg) const;
 
   /*!
+   * \brief Unpacks a value grid from a compressed bitstream
+   *
+   * \param msg Compressed Bitstream
+   *
+   * \returns Value Grid
+   */
+  typename VDBMappingT::ValueGridT::Ptr
+  msgToValue(const vdb_mapping_msgs::ValueGrid::ConstPtr& msg) const;
+
+  /*!
    * \brief Unpacks an update grid from a string
    *
    * \param msg Compressed Bitstream as std::string
@@ -202,12 +222,23 @@ public:
    */
   typename VDBMappingT::UpdateGridT::Ptr byteArrayToGrid(const std::vector<uint8_t>& msg) const;
 
+  /* !
+   * \brief Unpacks a value grid from a vector of uint8_t
+   *
+   * \param msg Compressed Bitstream as std::vector<uint8_t>
+   *
+   * \returns Value Grid
+   */
+  typename VDBMappingT::ValueGridT::Ptr byteArrayToValueGrid(const std::vector<uint8_t>& msg) const;
+
   /*!
    * \brief Listens to map updates and creats a map from these
    *
    * \param update_msg Single map update from a remote mapping instance
+   * \param value_msg Single map value from a remote mapping instance
    */
-  void mapUpdateCallback(const vdb_mapping_msgs::UpdateGrid::ConstPtr& update_msg);
+  void mapUpdateCallback(const vdb_mapping_msgs::UpdateGrid::ConstPtr& update_msg,
+                         const vdb_mapping_msgs::ValueGrid::ConstPtr& value_msg);
 
   /*!
    * \brief Listens to map overwrites and creates a map from these

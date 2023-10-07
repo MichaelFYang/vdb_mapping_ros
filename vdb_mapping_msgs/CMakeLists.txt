@@ -52,6 +52,7 @@ add_message_files(
   FILES
   BoundingBox.msg
   UpdateGrid.msg
+  ValueGrid.msg
 )
 
 ## Generate services in the 'srv' folder
