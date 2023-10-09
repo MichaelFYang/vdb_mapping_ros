@@ -61,14 +61,15 @@
 #include <dynamic_reconfigure/server.h>
 #include <vdb_mapping_ros/VDBMappingROSConfig.h>
 
-typedef message_filters::sync_policies::ApproximateTime<vdb_mapping_msgs::UpdateGrid, vdb_mapping_msgs::ValueGrid> MySyncPolicy;
-typedef message_filters::Synchronizer<MySyncPolicy> Sync;
+// typedef message_filters::sync_policies::ApproximateTime<vdb_mapping_msgs::UpdateGrid, vdb_mapping_msgs::ValueGrid> MySyncPolicy;
+// typedef message_filters::Synchronizer<MySyncPolicy> Sync;
 
 struct RemoteSource
 {
-  std::shared_ptr<message_filters::Subscriber<vdb_mapping_msgs::UpdateGrid>> map_update_sub;
-  std::shared_ptr<message_filters::Subscriber<vdb_mapping_msgs::ValueGrid>> map_value_sub;  
-  std::shared_ptr<Sync> sync;
+  // std::shared_ptr<message_filters::Subscriber<vdb_mapping_msgs::UpdateGrid>> map_update_sub;
+  // std::shared_ptr<message_filters::Subscriber<vdb_mapping_msgs::ValueGrid>> map_value_sub;  
+  // std::shared_ptr<Sync> sync;
+  ros::Subscriber map_update_sub;
   ros::Subscriber map_overwrite_sub;
   ros::Subscriber map_section_sub;
   ros::ServiceClient get_map_section_client;
@@ -186,6 +187,15 @@ public:
    */
   std::string gridToStr(const typename VDBMappingT::UpdateGridT::Ptr update) const;
 
+    /*!
+   * \brief Creates a compressed Bitstream as string from an input grid
+   *
+   * \param update value grid
+   *
+   * \returns bitstream
+   */
+  std::string valueGridToStr(const typename VDBMappingT::ValueGridT::Ptr update) const;
+
   /*!
    * \brief Creates a byte vector from an input grid
    *
@@ -194,6 +204,16 @@ public:
    * \returns bitstream
    */
   std::vector<uint8_t> gridToByteArray(const typename VDBMappingT::UpdateGridT::Ptr update) const;
+
+
+    /*!
+   * \brief Creates a byte vector from an input grid
+   *
+   * \param update value grid
+   *
+   * \returns bitstream
+   */
+  std::vector<uint8_t> valueToByteArray(const typename VDBMappingT::ValueGridT::Ptr update) const;
 
   /*!
    * \brief Unpacks an update grid from a compressed bitstream
@@ -223,6 +243,15 @@ public:
    * \returns Update Grid
    */
   typename VDBMappingT::UpdateGridT::Ptr strToGrid(const std::string& msg) const;
+
+  /*!
+   * \brief Unpacks an update grid from a string
+   *
+   * \param msg Compressed Bitstream as std::string
+   *
+   * \returns Update Grid
+   */
+  typename VDBMappingT::ValueGridT::Ptr strToValue(const std::string& msg) const;
 
   /*!
    * \brief Unpacks an update grid from a vector of uint8_t
