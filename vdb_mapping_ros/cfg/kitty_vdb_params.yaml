@@ -1,8 +1,8 @@
 # Basic setup
 map_frame: map
-robot_frame: BASE
-max_range: 25.0
-resolution: 0.07
+robot_frame: kitti360_gpsimu
+max_range: 20.0
+resolution: 0.1
 prob_hit: 0.95
 prob_miss: 0.10
 thres_min: 0.49
@@ -10,8 +10,8 @@ thres_max: 0.51
 map_save_dir: ""
 
 # visualization crop
-lower_visualization_z_limit: -10.0
-upper_visualization_z_limit: 10.0
+lower_visualization_z_limit: -5.0
+upper_visualization_z_limit: 5.0
 
 # Visualizations
 publish_pointcloud: true
@@ -19,18 +19,17 @@ publish_vis_marker: true
 visualization_rate: 2
 
 # Sensor input
-accumulate_updates: true
+accumulate_updates: false
 accumulation_period: 0.2
 apply_raw_sensor_data: true
-sources: [PandarQT, zed2i]
-PandarQT:
-  topic: /hesai/pandar
-  sensor_origin_frame: PandarQT
+sources: [Velodyne, Sick]
+Velodyne:
+  topic: /kitti360/cloud
+  sensor_origin_frame: kitti360_velodyne
 
-zed2i:
-  topic: /zed2i/zed_node/point_cloud/cloud_registered
-  sensor_origin_frame: zed2i_left_camera_frame
-  max_range: 15.0
+Sick:
+  topic: /kitti360/sick_points
+  sensor_origin_frame: kitti360_sick_points
 
 # Remote mapping
 publish_updates: true

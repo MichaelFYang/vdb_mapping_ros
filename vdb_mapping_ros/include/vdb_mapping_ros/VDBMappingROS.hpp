@@ -743,9 +743,7 @@ void VDBMappingROS<VDBMappingT>::publishMap() const
                                                     visualization_marker_msg,
                                                     cloud_msg,
                                                     publish_vis_marker,
-                                                    publish_pointcloud,
-                                                    m_lower_visualization_z_limit,
-                                                    m_upper_visualization_z_limit);
+                                                    publish_pointcloud);
   
   if (is_transform_available) {
     const double crop_dist = m_config.max_range / sqrt(2);

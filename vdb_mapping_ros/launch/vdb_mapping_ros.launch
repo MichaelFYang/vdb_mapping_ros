@@ -1,7 +1,7 @@
 <launch>
-  <arg name="config" default="$(find vdb_mapping_ros)/cfg/vdb_params.yaml"/>
+  <arg name="config" default=""/>
 
   <node pkg="vdb_mapping_ros" type="vdb_mapping_ros_node" name="vdb_mapping" output="screen">
-    <rosparam file="$(arg config)" command="load"/>
+    <rosparam file="$(find vdb_mapping_ros)/cfg/$(arg config)_vdb_params.yaml" command="load"/>
   </node>
 </launch>

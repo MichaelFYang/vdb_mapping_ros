@@ -32,9 +32,7 @@ void VDBMappingTools<VDBMappingT>::createMappingOutput(const typename VDBMapping
                                                        visualization_msgs::Marker& marker_msg,
                                                        sensor_msgs::PointCloud2& cloud_msg,
                                                        const bool create_marker,
-                                                       const bool create_pointcloud,
-                                                       const double lower_z_limit,
-                                                       const double upper_z_limit)
+                                                       const bool create_pointcloud)
 {
   typename VDBMappingT::PointCloudT::Ptr cloud(new typename VDBMappingT::PointCloudT);
 
@@ -46,12 +44,6 @@ void VDBMappingTools<VDBMappingT>::createMappingOutput(const typename VDBMapping
 
   min_z = min_world_coord.z();
   max_z = max_world_coord.z();
-  if (lower_z_limit != upper_z_limit && lower_z_limit < upper_z_limit)
-  {
-    min_z = min_z < lower_z_limit ? lower_z_limit : min_z;
-    max_z = max_z > upper_z_limit ? upper_z_limit : max_z;
-  }
-
 
   for (typename VDBMappingT::GridT::ValueOnCIter iter = grid->cbeginValueOn(); iter; ++iter)
   {
@@ -129,8 +121,8 @@ void VDBMappingTools<VDBMappingT>::createLocalMappingOutput(const typename VDBMa
 
   double min_z, max_z;
 
-  min_z = std::min(lower_z_limit, -5.0);
-  max_z = std::max(upper_z_limit, 5.0);
+  min_z = std::min(lower_z_limit, -1.0);
+  max_z = std::max(upper_z_limit, 1.0);
 
   // Calculate the robot positon and orientation in format of openvdb
   const openvdb::Vec3d robot_position(robot_pose.transform.translation.x,
