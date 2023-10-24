@@ -12,7 +12,7 @@ map_save_dir: ""
 # Visualizations
 publish_pointcloud: true
 publish_vis_marker: true
-visualization_rate: 2
+visualization_rate: 5
 
 # Sensor input
 apply_raw_sensor_data: false
