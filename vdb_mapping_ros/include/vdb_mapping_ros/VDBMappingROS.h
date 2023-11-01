@@ -132,8 +132,10 @@ public:
 
   /*!
    * \brief Publishes a marker array and pointcloud representation of the map
+   * \param local publish either local or global map
+
    */
-  void publishMap() const;
+  void publishMap(const bool& local) const;
 
 
   /*!
@@ -305,11 +307,18 @@ public:
   void dynamicReconfigureCallback(vdb_mapping_ros::VDBMappingROSConfig& config, uint32_t);
 
   /*!
-   * \brief Timer Callback for visualizing the entire map
+   * \brief Timer Callback for visualizing the global map
    *
    * \param event ROS Timer event
    */
   void visualizationTimerCallback(const ros::TimerEvent& event);
+
+  /*!
+   * \brief Timer Callback for visualizing the local map
+   *
+   * \param event ROS Timer event
+   */
+  void localUpdateTimerCallback(const ros::TimerEvent& event);
 
   /*!
    * \brief Timer Callback for integrating all accumulated data
@@ -489,6 +498,11 @@ private:
    * \brief Timer for map visualization
    */
   ros::Timer m_visualization_timer;
+
+  /*!
+   * \brief Local sensor update timer
+   */
+  ros::Timer m_local_update_timer;
 
   /*!
    * \brief Specifies whether the sensor data is accumulated before updating the map

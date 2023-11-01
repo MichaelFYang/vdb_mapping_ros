@@ -16,7 +16,8 @@ upper_visualization_z_limit: 10.0
 # Visualizations
 publish_pointcloud: true
 publish_vis_marker: true
-visualization_rate: 2
+local_visualization_rate: 10
+global_visualization_rate: 1
 
 # Sensor input
 accumulate_updates: true

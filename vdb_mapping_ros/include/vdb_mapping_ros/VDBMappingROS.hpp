@@ -202,10 +202,14 @@ VDBMappingROS<VDBMappingT>::VDBMappingROS(const ros::NodeHandle& nh)
   m_occupancy_grid_service =
     m_priv_nh.advertiseService("get_occupancy_grid", &VDBMappingROS::occGridGenCallback, this);
 
-  double visualization_rate;
-  m_priv_nh.param<double>("visualization_rate", visualization_rate, 1.0);
+  double local_visualization_rate, global_visualization_rate;
+  m_priv_nh.param<double>("local_visualization_rate", local_visualization_rate, 5.0);
+  m_priv_nh.param<double>("global_visualization_rate", global_visualization_rate, 1.0);
   m_visualization_timer = m_nh.createTimer(
-    ros::Rate(visualization_rate), &VDBMappingROS::visualizationTimerCallback, this);
+    ros::Rate(global_visualization_rate), &VDBMappingROS::visualizationTimerCallback, this);
+
+  m_local_update_timer = m_nh.createTimer(
+    ros::Rate(local_visualization_rate), &VDBMappingROS::localUpdateTimerCallback, this);
 
   m_priv_nh.param<bool>("accumulate_updates", m_accumulate_updates, false);
   if (m_accumulate_updates)
@@ -302,7 +306,8 @@ void VDBMappingROS<VDBMappingT>::resetMap()
 {
   ROS_INFO_STREAM("Reseting Map");
   m_vdb_map->resetMap();
-  publishMap();
+  publishMap(false); // publish global map
+  publishMap(true);  // publish local map
 }
 
 template <typename VDBMappingT>
@@ -321,7 +326,8 @@ bool VDBMappingROS<VDBMappingT>::loadMap(vdb_mapping_msgs::LoadMap::Request& req
 {
   ROS_INFO_STREAM("Loading Map");
   bool success = m_vdb_map->loadMap(req.path);
-  publishMap();
+  publishMap(false); // publish global map
+  publishMap(true);  // publish local map
   res.success = success;
   return success;
 }
@@ -663,7 +669,14 @@ template <typename VDBMappingT>
 void VDBMappingROS<VDBMappingT>::visualizationTimerCallback(const ros::TimerEvent& event)
 {
   (void)event;
-  publishMap();
+  publishMap(false); // publish global map
+}
+
+template <typename VDBMappingT>
+void VDBMappingROS<VDBMappingT>::localUpdateTimerCallback(const ros::TimerEvent& event)
+{
+  (void)event;
+  publishMap(true); // publish local map
 }
 
 template <typename VDBMappingT>
@@ -705,7 +718,7 @@ void VDBMappingROS<VDBMappingT>::sectionTimerCallback(const ros::TimerEvent& eve
 }
 
 template <typename VDBMappingT>
-void VDBMappingROS<VDBMappingT>::publishMap() const
+void VDBMappingROS<VDBMappingT>::publishMap(const bool& local) const
 {
   if (!(m_publish_pointcloud || m_publish_vis_marker))
   {
@@ -738,14 +751,19 @@ void VDBMappingROS<VDBMappingT>::publishMap() const
   visualization_msgs::Marker visualization_marker_msg, local_visual_marker_msg;
   sensor_msgs::PointCloud2 cloud_msg, local_cloud_msg;
 
-  VDBMappingTools<VDBMappingT>::createMappingOutput(m_vdb_map->getGrid(),
+  if (!local) {
+    // global map update
+    VDBMappingTools<VDBMappingT>::createMappingOutput(m_vdb_map->getGrid(),
                                                     m_map_frame,
                                                     visualization_marker_msg,
                                                     cloud_msg,
                                                     publish_vis_marker,
                                                     publish_pointcloud);
+  }
   
-  if (is_transform_available) {
+  
+  if (local && is_transform_available) {
+    // local map update
     const double crop_dist = m_config.max_range / sqrt(2);
     // extract local map
     const auto local_map = m_vdb_map->getMapSectionGrid(
@@ -765,19 +783,19 @@ void VDBMappingROS<VDBMappingT>::publishMap() const
                                                            m_upper_visualization_z_limit);
   }
 
-  if (publish_vis_marker)
+  if (!local && publish_vis_marker)
   {
     m_visualization_marker_pub.publish(visualization_marker_msg);
   }
-  if (publish_pointcloud)
+  if (!local && publish_pointcloud)
   {
     m_pointcloud_pub.publish(cloud_msg);
   }
-  if (is_transform_available && publish_local_vis_marker)
+  if (local && is_transform_available && publish_local_vis_marker)
   {
     m_local_visual_marker_pub.publish(local_visual_marker_msg);
   }
-  if (is_transform_available && publish_local_pointcloud)
+  if (local && is_transform_available && publish_local_pointcloud)
   {
     m_local_pointcloud_pub.publish(local_cloud_msg);
   }
