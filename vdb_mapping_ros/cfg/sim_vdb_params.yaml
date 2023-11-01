@@ -1,13 +1,14 @@
 # Basic setup
 map_frame: map
 robot_frame: sensor
-max_range: 10.0
+max_range: 20.0
 resolution: 0.1
 prob_hit: 0.99
 prob_miss: 0.10
 thres_min: 0.49
 thres_max: 0.51
-map_save_dir: ""
+map_save_dir: "/home/fanyang/ENVs/autonomous_exploration_development_environment/src/vdb_mapping_ros/data/"
+static_map: true
 
 # visualization crop
 lower_visualization_z_limit: -10.0
@@ -16,8 +17,12 @@ upper_visualization_z_limit: 10.0
 # Visualizations
 publish_pointcloud: true
 publish_vis_marker: true
+<<<<<<< HEAD
 local_visualization_rate: 10
 global_visualization_rate: 1
+=======
+visualization_rate: 5
+>>>>>>> 3d2f9da3cf358123f50462f924edcc017862a00c
 
 # Sensor input
 accumulate_updates: false

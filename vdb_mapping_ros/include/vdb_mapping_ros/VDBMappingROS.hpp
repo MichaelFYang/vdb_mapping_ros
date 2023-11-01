@@ -48,6 +48,7 @@ VDBMappingROS<VDBMappingT>::VDBMappingROS(const ros::NodeHandle& nh)
   m_priv_nh.param<int>("two_dim_projection_threshold", m_two_dim_projection_threshold, 5);
   m_priv_nh.param<double>("lower_visualization_z_limit", m_lower_visualization_z_limit, 0);
   m_priv_nh.param<double>("upper_visualization_z_limit", m_upper_visualization_z_limit, 0);
+  m_priv_nh.param<bool>("static_map", m_config.static_env, false);
 
   // Configuring the VDB map
   m_vdb_map->setConfig(m_config);
